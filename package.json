@@ -1,7 +1,7 @@
 {
   "name": "clean-react",
   "version": "1.0.0",
-  "description": "",
+  "description": "React using TDD, Clean Architecture and Typescript",
   "main": "index.js",
   "scripts": {
     "test": "jest --passWithNoTests",
@@ -11,8 +11,8 @@
     "prepare": "husky install"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Yuri Cavalini",
+  "license": "GNU GPL3",
   "devDependencies": {
     "@faker-js/faker": "^7.5.0",
     "@types/jest": "^29.0.0",
