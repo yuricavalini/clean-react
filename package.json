@@ -16,6 +16,7 @@
   "license": "GNU GPL3",
   "devDependencies": {
     "@faker-js/faker": "^7.5.0",
+    "@testing-library/react": "^13.4.0",
     "@types/jest": "^29.0.0",
     "@types/node": "^18.7.16",
     "@types/react": "^18.0.19",
