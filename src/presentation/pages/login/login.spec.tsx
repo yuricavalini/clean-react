@@ -7,5 +7,7 @@ describe('Login Component', () => {
     render(<Login />)
     const errorWrap = screen.getByRole('generic', { name: 'error-wrap' })
     expect(errorWrap.childElementCount).toBe(0)
+    const submitBurron = screen.getByRole<HTMLButtonElement>('button', { name: 'Entrar' })
+    expect(submitBurron.disabled).toBe(true)
   })
 })
