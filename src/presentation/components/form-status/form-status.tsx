@@ -1,13 +1,13 @@
 import React, { useContext } from 'react'
+import Context from '@/presentation/contexts/form/login-context'
+import { LoginState } from '@/presentation/pages/login/login'
 
 import Styles from './form-status-styles.scss'
 
 import Spinner from '../spinner/spinner'
 
-import Context, { LoginContext } from '@/presentation/contexts/form/login-context'
-
 const FormStatus: React.FC = () => {
-  const { isLoading, errorMessage } = useContext(Context) as LoginContext
+  const { isLoading, errorMessage } = useContext(Context) as LoginState
 
   return (
     <div data-testid="error-wrap" className={Styles.errorWrap}>

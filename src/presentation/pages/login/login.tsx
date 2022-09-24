@@ -4,10 +4,15 @@ import Styles from './login-styles.scss'
 
 import { Footer, Input, FormStatus, LoginHeader } from '@/presentation/components'
 
-import Context, { LoginContext } from '@/presentation/contexts/form/login-context'
+import Context from '@/presentation/contexts/form/login-context'
+
+export interface LoginState {
+  isLoading: boolean
+  errorMessage: string
+}
 
 const Login: React.FC = () => {
-  const [state] = useState<LoginContext>({
+  const [state] = useState<LoginState>({
     isLoading: false,
     errorMessage: ''
   })

@@ -1,8 +1,4 @@
 import { createContext } from 'react'
+import { LoginState } from '@/presentation/pages/login/login'
 
-export interface LoginContext {
-  isLoading: boolean
-  errorMessage: string
-}
-
-export default createContext<LoginContext | null>(null)
+export default createContext<LoginState | null>(null)
