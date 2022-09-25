@@ -7,10 +7,13 @@
   "extends": [
     "standard-with-typescript",
     "plugin:@typescript-eslint/recommended",
-    "plugin:react/recommended"
+    "plugin:react/recommended",
+    "plugin:testing-library/react",
+    "plugin:testing-library/dom"
   ],
   "plugins": [
-    "react"
+    "react",
+    "testing-library"
   ],
   "parserOptions": {
     "project": "./tsconfig.json"
