@@ -1,26 +1,25 @@
 import React from 'react'
-import { fireEvent, render, RenderResult, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import Login from './login'
 import { ValidationSpy } from '@/presentation/test'
 import { faker } from '@faker-js/faker'
 
 type SutTypes = {
-  sut: RenderResult
   validationSpy: ValidationSpy
 }
 
 const makeSut = (): SutTypes => {
   const validationSpy = new ValidationSpy()
-  const view = render(<Login validation={validationSpy} />)
+  validationSpy.errorMessage = faker.random.words()
+  render(<Login validation={validationSpy} />)
   return {
-    sut: view,
     validationSpy
   }
 }
 
 describe('Login Component', () => {
   test('Should start with initial state', () => {
-    makeSut()
+    const { validationSpy } = makeSut()
 
     const errorWrap = screen.getByRole('generic', { name: 'error-wrap' })
     expect(errorWrap).toBeEmptyDOMElement()
@@ -29,7 +28,7 @@ describe('Login Component', () => {
     expect(submitButton).toBeDisabled()
 
     const emailStatus = screen.getByRole('generic', { name: 'email-status' })
-    expect(emailStatus.title).toBe('Campo obrigatório')
+    expect(emailStatus.title).toBe(validationSpy.errorMessage)
     expect(emailStatus.textContent).toBe('🔴')
 
     const passwordStatus = screen.getByRole('generic', { name: 'password-status' })
@@ -49,7 +48,6 @@ describe('Login Component', () => {
 
   test('Should call Validation with correct password', () => {
     const { validationSpy } = makeSut()
-
     /**
      * Testing-library fails to query input[type='password'] when using getByRole method.
      * This is a workaround when not using a label.
@@ -59,5 +57,14 @@ describe('Login Component', () => {
     fireEvent.input(passwordInput, { target: { value: password } })
     expect(validationSpy.fieldName).toBe('password')
     expect(validationSpy.fieldValue).toBe(password)
+  })
+
+  test('Should show email error if Validation fails', () => {
+    const { validationSpy } = makeSut()
+    const emailInput = screen.getByRole('textbox', { name: /email/ })
+    fireEvent.input(emailInput, { target: { value: faker.internet.email() } })
+    const emailStatus = screen.getByRole('generic', { name: /email-status/ })
+    expect(emailStatus.title).toBe(validationSpy.errorMessage)
+    expect(emailStatus.textContent).toBe('🔴')
   })
 })
