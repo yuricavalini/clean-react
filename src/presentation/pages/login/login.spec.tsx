@@ -55,4 +55,18 @@ describe('Login Component', () => {
       email: 'any_email'
     })
   })
+
+  test('Should call Validation with correct password', () => {
+    const { validationSpy } = makeSut()
+
+    /**
+     * Testing-library fails to query input[type='password'] when using getByRole method.
+     * This is a workaround when not using a label.
+     */
+    const passwordInput = screen.getByPlaceholderText(/Digite sua senha/)
+    fireEvent.input(passwordInput, { target: { value: 'any_password' } })
+    expect(validationSpy.input).toEqual({
+      password: 'any_password'
+    })
+  })
 })
