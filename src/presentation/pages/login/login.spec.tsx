@@ -46,6 +46,15 @@ describe('Login Component', () => {
     expect(emailStatus.textContent).toBe('🔴')
   })
 
+  test('Should show password error if Validation fails', () => {
+    const { validationStub } = makeSut()
+    const passwordInput = screen.getByPlaceholderText(/Digite sua senha/)
+    fireEvent.input(passwordInput, { target: { value: faker.internet.password() } })
+    const passwordStatus = screen.getByRole('generic', { name: /email-status/ })
+    expect(passwordStatus.title).toBe(validationStub.errorMessage)
+    expect(passwordStatus.textContent).toBe('🔴')
+  })
+
   test('Should show valid email state if Validation succeeds', () => {
     const { validationStub } = makeSut()
     validationStub.errorMessage = ''
