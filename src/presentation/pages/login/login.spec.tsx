@@ -1,25 +1,26 @@
 import React from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import Login from './login'
-import { ValidationSpy } from '@/presentation/test'
+import { ValidationStub } from '@/presentation/test'
 import { faker } from '@faker-js/faker'
 
 type SutTypes = {
-  validationSpy: ValidationSpy
+  validationStub: ValidationStub
 }
 
 const makeSut = (): SutTypes => {
-  const validationSpy = new ValidationSpy()
-  validationSpy.errorMessage = faker.random.words()
-  render(<Login validation={validationSpy} />)
+  const validationStub = new ValidationStub()
+  validationStub.errorMessage = faker.random.words()
+  render(<Login validation={validationStub} />)
+
   return {
-    validationSpy
+    validationStub
   }
 }
 
 describe('Login Component', () => {
   test('Should start with initial state', () => {
-    const { validationSpy } = makeSut()
+    const { validationStub } = makeSut()
 
     const errorWrap = screen.getByRole('generic', { name: 'error-wrap' })
     expect(errorWrap).toBeEmptyDOMElement()
@@ -28,43 +29,34 @@ describe('Login Component', () => {
     expect(submitButton).toBeDisabled()
 
     const emailStatus = screen.getByRole('generic', { name: 'email-status' })
-    expect(emailStatus.title).toBe(validationSpy.errorMessage)
+    expect(emailStatus.title).toBe(validationStub.errorMessage)
     expect(emailStatus.textContent).toBe('🔴')
 
     const passwordStatus = screen.getByRole('generic', { name: 'password-status' })
-    expect(passwordStatus.title).toBe('Campo obrigatório')
+    expect(passwordStatus.title).toBe(validationStub.errorMessage)
     expect(passwordStatus.textContent).toBe('🔴')
   })
 
-  test('Should call Validation with correct email', () => {
-    const { validationSpy } = makeSut()
-
+  test('Should show email error if Validation fails', () => {
+    const { validationStub } = makeSut()
     const emailInput = screen.getByRole('textbox', { name: /email/ })
-    const email = faker.internet.email()
-    fireEvent.input(emailInput, { target: { value: email } })
-    expect(validationSpy.fieldName).toBe('email')
-    expect(validationSpy.fieldValue).toBe(email)
+    fireEvent.input(emailInput, { target: { value: faker.internet.email() } })
+    const emailStatus = screen.getByRole('generic', { name: /email-status/ })
+    expect(emailStatus.title).toBe(validationStub.errorMessage)
+    expect(emailStatus.textContent).toBe('🔴')
   })
 
-  test('Should call Validation with correct password', () => {
-    const { validationSpy } = makeSut()
+  test('Should show valid password state if Validation succeeds', () => {
+    const { validationStub } = makeSut()
+    validationStub.errorMessage = ''
     /**
      * Testing-library fails to query input[type='password'] when using getByRole method.
      * This is a workaround when not using a label.
      */
     const passwordInput = screen.getByPlaceholderText(/Digite sua senha/)
-    const password = faker.internet.password()
-    fireEvent.input(passwordInput, { target: { value: password } })
-    expect(validationSpy.fieldName).toBe('password')
-    expect(validationSpy.fieldValue).toBe(password)
-  })
-
-  test('Should show email error if Validation fails', () => {
-    const { validationSpy } = makeSut()
-    const emailInput = screen.getByRole('textbox', { name: /email/ })
-    fireEvent.input(emailInput, { target: { value: faker.internet.email() } })
-    const emailStatus = screen.getByRole('generic', { name: /email-status/ })
-    expect(emailStatus.title).toBe(validationSpy.errorMessage)
-    expect(emailStatus.textContent).toBe('🔴')
+    fireEvent.input(passwordInput, { target: { value: faker.internet.password() } })
+    const passwordStatus = screen.getByRole('generic', { name: /password-status/ })
+    expect(passwordStatus.title).toBe('Tudo certo!')
+    expect(passwordStatus.textContent).toBe('🟢')
   })
 })
