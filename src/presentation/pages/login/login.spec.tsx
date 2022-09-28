@@ -3,15 +3,36 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import Login from './login'
 import { ValidationStub } from '@/presentation/test'
 import { faker } from '@faker-js/faker'
+import { Authentication, AuthenticationParams } from '@/domain/usecases'
+import { AccountModel } from '@/domain/models'
+import { mockAccountModel } from '@/domain/test'
+
+class AuthenticationSpy implements Authentication {
+  account = mockAccountModel()
+  params: AuthenticationParams = { email: '', password: '' }
+  async auth (params: AuthenticationParams): Promise<AccountModel> {
+    this.params = params
+    return await Promise.resolve(this.account)
+  }
+}
+
+type SutTypes = {
+  authenticationSpy: AuthenticationSpy
+}
 
 type SutParams = {
   validationError: string
 }
 
-const makeSut = (params?: SutParams): void => {
+const makeSut = (params?: SutParams): SutTypes => {
   const validationStub = new ValidationStub()
+  const authenticationSpy = new AuthenticationSpy()
   validationStub.errorMessage = params?.validationError ?? ''
-  render(<Login validation={validationStub} />)
+  render(<Login validation={validationStub} authentication={authenticationSpy} />)
+
+  return {
+    authenticationSpy
+  }
 }
 
 describe('Login Component', () => {
@@ -106,5 +127,25 @@ describe('Login Component', () => {
     fireEvent.click(submitButton)
     const spinner = screen.getByRole('generic', { name: /loading-spinner/i })
     expect(spinner).toBeInTheDocument()
+  })
+
+  test('Should call Authentication with correct values', () => {
+    const { authenticationSpy } = makeSut()
+    const emailInput = screen.getByRole('textbox', { name: /email/ })
+    const email = faker.internet.email()
+    fireEvent.input(emailInput, { target: { value: email } })
+    /**
+    * Testing-library fails to query input[type='password'] when using getByRole method.
+    * This is a workaround when not using a label.
+    */
+    const passwordInput = screen.getByPlaceholderText(/Digite sua senha/)
+    const password = faker.internet.password()
+    fireEvent.input(passwordInput, { target: { value: password } })
+    const submitButton = screen.getByRole('button', { name: /entrar/i })
+    fireEvent.click(submitButton)
+    expect(authenticationSpy.params).toEqual({
+      email,
+      password
+    })
   })
 })
