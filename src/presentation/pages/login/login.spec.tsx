@@ -1,7 +1,7 @@
 import React from 'react'
-import { fireEvent, render, screen } from '@testing-library/react'
 import Login from './login'
 import { ValidationStub, AuthenticationSpy } from '@/presentation/test'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { faker } from '@faker-js/faker'
 
 type SutTypes = {
@@ -23,6 +23,33 @@ const makeSut = (params?: SutParams): SutTypes => {
   }
 }
 
+const simulateValidSubmit = (email = faker.internet.email(), password = faker.internet.password()): void => {
+  populateEmailField(email)
+  populatePasswordField(password)
+  const submitButton = screen.getByRole('button', { name: /entrar/i })
+  fireEvent.click(submitButton)
+}
+
+const populateEmailField = (email = faker.internet.email()): void => {
+  const emailInput = screen.getByRole('textbox', { name: /email/ })
+  fireEvent.input(emailInput, { target: { value: email } })
+}
+
+const populatePasswordField = (password = faker.internet.email()): void => {
+  /**
+  * Testing-library fails to query input[type='password'] when using getByRole method.
+  * This is a workaround when not using a label and also recommended in this situation. Check: https://testing-library.com/docs/queries/about/#priority
+  */
+  const passwordInput = screen.getByPlaceholderText(/Digite sua senha/)
+  fireEvent.input(passwordInput, { target: { value: password } })
+}
+
+const simulateStatusforField = (fieldName: string, validationError?: string): void => {
+  const emailStatus = screen.getByRole('generic', { name: `${fieldName}-status` })
+  expect(emailStatus.title).toBe(validationError ?? 'Tudo certo!')
+  expect(emailStatus.textContent).toBe(validationError ? '🔴' : '🟢')
+}
+
 describe('Login Component', () => {
   test('Should start with initial state', () => {
     const validationError = faker.random.words()
@@ -34,103 +61,63 @@ describe('Login Component', () => {
     const submitButton = screen.getByRole('button', { name: 'Entrar' })
     expect(submitButton).toBeDisabled()
 
-    const emailStatus = screen.getByRole('generic', { name: 'email-status' })
-    expect(emailStatus.title).toBe(validationError)
-    expect(emailStatus.textContent).toBe('🔴')
-
-    const passwordStatus = screen.getByRole('generic', { name: 'password-status' })
-    expect(passwordStatus.title).toBe(validationError)
-    expect(passwordStatus.textContent).toBe('🔴')
+    simulateStatusforField('email', validationError)
+    simulateStatusforField('password', validationError)
   })
 
   test('Should show email error if Validation fails', () => {
     const validationError = faker.random.words()
     makeSut({ validationError })
 
-    const emailInput = screen.getByRole('textbox', { name: /email/ })
-    fireEvent.input(emailInput, { target: { value: faker.internet.email() } })
-    const emailStatus = screen.getByRole('generic', { name: /email-status/ })
-    expect(emailStatus.title).toBe(validationError)
-    expect(emailStatus.textContent).toBe('🔴')
+    populateEmailField()
+    simulateStatusforField('email', validationError)
   })
 
   test('Should show password error if Validation fails', () => {
     const validationError = faker.random.words()
     makeSut({ validationError })
 
-    const passwordInput = screen.getByPlaceholderText(/Digite sua senha/)
-    fireEvent.input(passwordInput, { target: { value: faker.internet.password() } })
-    const passwordStatus = screen.getByRole('generic', { name: /email-status/ })
-    expect(passwordStatus.title).toBe(validationError)
-    expect(passwordStatus.textContent).toBe('🔴')
+    populatePasswordField()
+    simulateStatusforField('password', validationError)
   })
 
   test('Should show valid email state if Validation succeeds', () => {
     makeSut()
-    const emailInput = screen.getByRole('textbox', { name: /email/ })
-    fireEvent.input(emailInput, { target: { value: faker.internet.email() } })
-    const emailStatus = screen.getByRole('generic', { name: /email-status/ })
-    expect(emailStatus.title).toBe('Tudo certo!')
-    expect(emailStatus.textContent).toBe('🟢')
+
+    populateEmailField()
+    simulateStatusforField('email')
   })
 
   test('Should show valid password state if Validation succeeds', () => {
     makeSut()
-    /**
-     * Testing-library fails to query input[type='password'] when using getByRole method.
-     * This is a workaround when not using a label.
-     */
-    const passwordInput = screen.getByPlaceholderText(/Digite sua senha/)
-    fireEvent.input(passwordInput, { target: { value: faker.internet.password() } })
-    const passwordStatus = screen.getByRole('generic', { name: /password-status/ })
-    expect(passwordStatus.title).toBe('Tudo certo!')
-    expect(passwordStatus.textContent).toBe('🟢')
+
+    populatePasswordField()
+    simulateStatusforField('password')
   })
 
   test('Should enable submit button if form is valid', () => {
     makeSut()
-    const emailInput = screen.getByRole('textbox', { name: /email/ })
-    fireEvent.input(emailInput, { target: { value: faker.internet.email() } })
-    /**
-    * Testing-library fails to query input[type='password'] when using getByRole method.
-    * This is a workaround when not using a label.
-    */
-    const passwordInput = screen.getByPlaceholderText(/Digite sua senha/)
-    fireEvent.input(passwordInput, { target: { value: faker.internet.password() } })
+
+    populateEmailField()
+    populatePasswordField()
     const submitButton = screen.getByRole('button', { name: /entrar/i })
     expect(submitButton).not.toBeDisabled()
   })
 
   test('Should show spinner on submit', () => {
     makeSut()
-    const emailInput = screen.getByRole('textbox', { name: /email/ })
-    fireEvent.input(emailInput, { target: { value: faker.internet.email() } })
-    /**
-    * Testing-library fails to query input[type='password'] when using getByRole method.
-    * This is a workaround when not using a label.
-    */
-    const passwordInput = screen.getByPlaceholderText(/Digite sua senha/)
-    fireEvent.input(passwordInput, { target: { value: faker.internet.password() } })
-    const submitButton = screen.getByRole('button', { name: /entrar/i })
-    fireEvent.click(submitButton)
+
+    simulateValidSubmit()
     const spinner = screen.getByRole('generic', { name: /loading-spinner/i })
     expect(spinner).toBeInTheDocument()
   })
 
   test('Should call Authentication with correct values', () => {
     const { authenticationSpy } = makeSut()
-    const emailInput = screen.getByRole('textbox', { name: /email/ })
+
     const email = faker.internet.email()
-    fireEvent.input(emailInput, { target: { value: email } })
-    /**
-    * Testing-library fails to query input[type='password'] when using getByRole method.
-    * This is a workaround when not using a label.
-    */
-    const passwordInput = screen.getByPlaceholderText(/Digite sua senha/)
     const password = faker.internet.password()
-    fireEvent.input(passwordInput, { target: { value: password } })
-    const submitButton = screen.getByRole('button', { name: /entrar/i })
-    fireEvent.click(submitButton)
+    simulateValidSubmit(email, password)
     expect(authenticationSpy.params).toEqual({
       email,
       password
