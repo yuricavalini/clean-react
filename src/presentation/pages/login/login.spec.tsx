@@ -91,4 +91,20 @@ describe('Login Component', () => {
     const submitButton = screen.getByRole('button', { name: /entrar/i })
     expect(submitButton).not.toBeDisabled()
   })
+
+  test('Should show spinner on submit', () => {
+    makeSut()
+    const emailInput = screen.getByRole('textbox', { name: /email/ })
+    fireEvent.input(emailInput, { target: { value: faker.internet.email() } })
+    /**
+    * Testing-library fails to query input[type='password'] when using getByRole method.
+    * This is a workaround when not using a label.
+    */
+    const passwordInput = screen.getByPlaceholderText(/Digite sua senha/)
+    fireEvent.input(passwordInput, { target: { value: faker.internet.password() } })
+    const submitButton = screen.getByRole('button', { name: /entrar/i })
+    fireEvent.click(submitButton)
+    const spinner = screen.getByRole('generic', { name: /loading-spinner/i })
+    expect(spinner).toBeInTheDocument()
+  })
 })
