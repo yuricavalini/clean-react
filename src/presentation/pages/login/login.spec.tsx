@@ -135,4 +135,14 @@ describe('Login Component', () => {
     await simulateValidSubmit(user, 'dblClick')
     expect(authenticationSpy.callsCount).toBe(1)
   })
+
+  test('Should not call Authentication if form is invalid', async () => {
+    const validationError = faker.random.words()
+    const { authenticationSpy, user } = makeSut({ validationError })
+
+    await populateEmailField(user)
+    const form = screen.getByRole('form', { name: /login form/ })
+    fireEvent.submit(form)
+    expect(authenticationSpy.callsCount).toBe(0)
+  })
 })
