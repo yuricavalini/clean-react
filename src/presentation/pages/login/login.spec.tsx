@@ -1,10 +1,11 @@
 import React from 'react'
 import Login from './login'
 import { ValidationStub, AuthenticationSpy } from '@/presentation/test'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { UserEvent, UserEventApi } from '@testing-library/user-event/dist/types/setup/setup'
 import { faker } from '@faker-js/faker'
+import { InvalidCredentialsError } from '@/domain/errors'
 
 type SutTypes = {
   authenticationSpy: AuthenticationSpy
@@ -144,5 +145,18 @@ describe('Login Component', () => {
     const form = screen.getByRole('form', { name: /login form/ })
     fireEvent.submit(form)
     expect(authenticationSpy.callsCount).toBe(0)
+  })
+
+  test('Should present error if Authentication fails', async () => {
+    const { authenticationSpy, user } = makeSut()
+
+    const error = new InvalidCredentialsError()
+    jest.spyOn(authenticationSpy, 'auth').mockRejectedValueOnce(error)
+    await simulateValidSubmit(user, 'click')
+    const errorWrap = screen.getByRole('generic', { name: 'error-wrap' })
+    const mainError = screen.getByRole('generic', { name: /main-error/ })
+    expect(mainError.textContent).toBe(error.message)
+    expect(within(errorWrap).getAllByRole('generic')).toHaveLength(1)
+    expect(errorWrap).toContainElement(mainError)
   })
 })
