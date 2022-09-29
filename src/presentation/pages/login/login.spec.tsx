@@ -1,11 +1,14 @@
 import React from 'react'
 import Login from './login'
 import { ValidationStub, AuthenticationSpy } from '@/presentation/test'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { UserEvent } from '@testing-library/user-event/dist/types/setup/setup'
 import { faker } from '@faker-js/faker'
 
 type SutTypes = {
   authenticationSpy: AuthenticationSpy
+  user: UserEvent
 }
 
 type SutParams = {
@@ -16,32 +19,34 @@ const makeSut = (params?: SutParams): SutTypes => {
   const validationStub = new ValidationStub()
   const authenticationSpy = new AuthenticationSpy()
   validationStub.errorMessage = params?.validationError ?? ''
+  const user = userEvent.setup()
   render(<Login validation={validationStub} authentication={authenticationSpy} />)
 
   return {
-    authenticationSpy
+    authenticationSpy,
+    user
   }
 }
 
-const simulateValidSubmit = (email = faker.internet.email(), password = faker.internet.password()): void => {
-  populateEmailField(email)
-  populatePasswordField(password)
+const simulateValidSubmit = async (userEvent: UserEvent, email = faker.internet.email(), password = faker.internet.password()): Promise<void> => {
+  await populateEmailField(userEvent, email)
+  await populatePasswordField(userEvent, password)
   const submitButton = screen.getByRole('button', { name: /entrar/i })
-  fireEvent.click(submitButton)
+  await userEvent.click(submitButton)
 }
 
-const populateEmailField = (email = faker.internet.email()): void => {
+const populateEmailField = async (userEvent: UserEvent, email = faker.internet.email()): Promise<void> => {
   const emailInput = screen.getByRole('textbox', { name: /email/ })
-  fireEvent.input(emailInput, { target: { value: email } })
+  await userEvent.type(emailInput, email)
 }
 
-const populatePasswordField = (password = faker.internet.email()): void => {
+const populatePasswordField = async (userEvent: UserEvent, password = faker.internet.email()): Promise<void> => {
   /**
   * Testing-library fails to query input[type='password'] when using getByRole method.
   * This is a workaround when not using a label and also recommended in this situation. Check: https://testing-library.com/docs/queries/about/#priority
   */
   const passwordInput = screen.getByPlaceholderText(/Digite sua senha/)
-  fireEvent.input(passwordInput, { target: { value: password } })
+  await userEvent.type(passwordInput, password)
 }
 
 const simulateStatusforField = (fieldName: string, validationError?: string): void => {
@@ -65,59 +70,59 @@ describe('Login Component', () => {
     simulateStatusforField('password', validationError)
   })
 
-  test('Should show email error if Validation fails', () => {
+  test('Should show email error if Validation fails', async () => {
     const validationError = faker.random.words()
-    makeSut({ validationError })
+    const { user } = makeSut({ validationError })
 
-    populateEmailField()
+    await populateEmailField(user)
     simulateStatusforField('email', validationError)
   })
 
-  test('Should show password error if Validation fails', () => {
+  test('Should show password error if Validation fails', async () => {
     const validationError = faker.random.words()
-    makeSut({ validationError })
+    const { user } = makeSut({ validationError })
 
-    populatePasswordField()
+    await populatePasswordField(user)
     simulateStatusforField('password', validationError)
   })
 
-  test('Should show valid email state if Validation succeeds', () => {
-    makeSut()
+  test('Should show valid email state if Validation succeeds', async () => {
+    const { user } = makeSut()
 
-    populateEmailField()
+    await populateEmailField(user)
     simulateStatusforField('email')
   })
 
-  test('Should show valid password state if Validation succeeds', () => {
-    makeSut()
+  test('Should show valid password state if Validation succeeds', async () => {
+    const { user } = makeSut()
 
-    populatePasswordField()
+    await populatePasswordField(user)
     simulateStatusforField('password')
   })
 
-  test('Should enable submit button if form is valid', () => {
-    makeSut()
+  test('Should enable submit button if form is valid', async () => {
+    const { user } = makeSut()
 
-    populateEmailField()
-    populatePasswordField()
+    await populateEmailField(user)
+    await populatePasswordField(user)
     const submitButton = screen.getByRole('button', { name: /entrar/i })
     expect(submitButton).not.toBeDisabled()
   })
 
-  test('Should show spinner on submit', () => {
-    makeSut()
+  test('Should show spinner on submit', async () => {
+    const { user } = makeSut()
 
-    simulateValidSubmit()
+    await simulateValidSubmit(user)
     const spinner = screen.getByRole('generic', { name: /loading-spinner/i })
     expect(spinner).toBeInTheDocument()
   })
 
-  test('Should call Authentication with correct values', () => {
-    const { authenticationSpy } = makeSut()
+  test('Should call Authentication with correct values', async () => {
+    const { authenticationSpy, user } = makeSut()
 
     const email = faker.internet.email()
     const password = faker.internet.password()
-    simulateValidSubmit(email, password)
+    await simulateValidSubmit(user, email, password)
     expect(authenticationSpy.params).toEqual({
       email,
       password
