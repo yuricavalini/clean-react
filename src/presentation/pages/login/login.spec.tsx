@@ -1,9 +1,9 @@
 import React from 'react'
 import Login from './login'
 import { ValidationStub, AuthenticationSpy } from '@/presentation/test'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { UserEvent } from '@testing-library/user-event/dist/types/setup/setup'
+import { UserEvent, UserEventApi } from '@testing-library/user-event/dist/types/setup/setup'
 import { faker } from '@faker-js/faker'
 
 type SutTypes = {
@@ -28,11 +28,11 @@ const makeSut = (params?: SutParams): SutTypes => {
   }
 }
 
-const simulateValidSubmit = async (userEvent: UserEvent, email = faker.internet.email(), password = faker.internet.password()): Promise<void> => {
+const simulateValidSubmit = async (userEvent: UserEvent, event: keyof Pick<UserEventApi, 'click' | 'dblClick'>, email = faker.internet.email(), password = faker.internet.password()): Promise<void> => {
   await populateEmailField(userEvent, email)
   await populatePasswordField(userEvent, password)
   const submitButton = screen.getByRole('button', { name: /entrar/i })
-  await userEvent.click(submitButton)
+  await userEvent[event](submitButton)
 }
 
 const populateEmailField = async (userEvent: UserEvent, email = faker.internet.email()): Promise<void> => {
@@ -112,7 +112,7 @@ describe('Login Component', () => {
   test('Should show spinner on submit', async () => {
     const { user } = makeSut()
 
-    await simulateValidSubmit(user)
+    await simulateValidSubmit(user, 'click')
     const spinner = screen.getByRole('generic', { name: /loading-spinner/i })
     expect(spinner).toBeInTheDocument()
   })
@@ -122,10 +122,17 @@ describe('Login Component', () => {
 
     const email = faker.internet.email()
     const password = faker.internet.password()
-    await simulateValidSubmit(user, email, password)
+    await simulateValidSubmit(user, 'click', email, password)
     expect(authenticationSpy.params).toEqual({
       email,
       password
     })
+  })
+
+  test('Should call Authentication only once', async () => {
+    const { authenticationSpy, user } = makeSut()
+
+    await simulateValidSubmit(user, 'dblClick')
+    expect(authenticationSpy.callsCount).toBe(1)
   })
 })
