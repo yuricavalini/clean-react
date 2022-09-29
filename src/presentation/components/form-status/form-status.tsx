@@ -11,8 +11,8 @@ const FormStatus: React.FC = () => {
 
   return (
     <div aria-label="error-wrap" className={Styles.errorWrap}>
-      { state.isLoading && <Spinner className={Styles.spinner} />}
-      { state.mainError && <span className={Styles.error}>{state.mainError}</span> }
+      {state.isLoading && <Spinner className={Styles.spinner} />}
+      {state.mainError && <span aria-label="main-error" className={Styles.error}>{state.mainError}</span>}
     </div>
   )
 }
