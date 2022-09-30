@@ -1,4 +1,6 @@
 import React from 'react'
+import { Router } from 'react-router-dom'
+import { createMemoryHistory } from 'history'
 import Login from './login'
 import { ValidationStub, AuthenticationSpy } from '@/presentation/test'
 import { InvalidCredentialsError } from '@/domain/errors'
@@ -17,12 +19,18 @@ type SutParams = {
   validationError: string
 }
 
+const history = createMemoryHistory()
+
 const makeSut = (params?: SutParams): SutTypes => {
   const validationStub = new ValidationStub()
   const authenticationSpy = new AuthenticationSpy()
   validationStub.errorMessage = params?.validationError ?? ''
   const user = userEvent.setup()
-  render(<Login validation={validationStub} authentication={authenticationSpy} />)
+  render(
+    <Router history={history}>
+      <Login validation={validationStub} authentication={authenticationSpy} />
+    </Router>
+  )
 
   return {
     authenticationSpy,
@@ -171,5 +179,14 @@ describe('Login Component', () => {
     await simulateValidSubmit(user, 'click')
     await screen.findByRole('form', { name: /login form/ })
     expect(localStorage.setItem).toHaveBeenCalledWith('accessToken', authenticationSpy.account.accessToken)
+  })
+
+  test('Should go to signup page', async () => {
+    const { user } = makeSut()
+
+    const register = screen.getByRole('link', { name: /Go to register page/ })
+    await user.click(register)
+    expect(history).toHaveLength(2)
+    expect(history.location.pathname).toBe('/signup')
   })
 })
