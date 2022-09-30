@@ -167,6 +167,7 @@ describe('Login Component', () => {
     jest.spyOn(authenticationSpy, 'auth').mockRejectedValueOnce(error)
     await simulateValidSubmit(user, 'click')
     const errorWrap = screen.getByRole('generic', { name: 'error-wrap' })
+    await waitFor(() => errorWrap)
     const mainError = screen.getByRole('generic', { name: /main-error/ })
     expect(mainError.textContent).toBe(error.message)
     expect(within(errorWrap).getAllByRole('generic')).toHaveLength(1)
@@ -177,7 +178,7 @@ describe('Login Component', () => {
     const { authenticationSpy, user } = makeSut()
 
     await simulateValidSubmit(user, 'click')
-    await screen.findByRole('form', { name: /login form/ })
+    await waitFor(async () => await screen.findByRole('form', { name: /login form/ }))
     expect(localStorage.setItem).toHaveBeenCalledWith('accessToken', authenticationSpy.account.accessToken)
     expect(history).toHaveLength(1)
     expect(history.location.pathname).toBe('/')
