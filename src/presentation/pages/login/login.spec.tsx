@@ -1,11 +1,12 @@
 import React from 'react'
 import Login from './login'
 import { ValidationStub, AuthenticationSpy } from '@/presentation/test'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { InvalidCredentialsError } from '@/domain/errors'
+import 'jest-localstorage-mock'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { UserEvent, UserEventApi } from '@testing-library/user-event/dist/types/setup/setup'
 import { faker } from '@faker-js/faker'
-import { InvalidCredentialsError } from '@/domain/errors'
 
 type SutTypes = {
   authenticationSpy: AuthenticationSpy
@@ -57,6 +58,10 @@ const simulateStatusforField = (fieldName: string, validationError?: string): vo
 }
 
 describe('Login Component', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
   test('Should start with initial state', () => {
     const validationError = faker.random.words()
     makeSut({ validationError })
@@ -158,5 +163,13 @@ describe('Login Component', () => {
     expect(mainError.textContent).toBe(error.message)
     expect(within(errorWrap).getAllByRole('generic')).toHaveLength(1)
     expect(errorWrap).toContainElement(mainError)
+  })
+
+  test('Should add accessToken to localstorage on success', async () => {
+    const { authenticationSpy, user } = makeSut()
+
+    await simulateValidSubmit(user, 'click')
+    await screen.findByRole('form', { name: /login form/ })
+    expect(localStorage.setItem).toHaveBeenCalledWith('accessToken', authenticationSpy.account.accessToken)
   })
 })
