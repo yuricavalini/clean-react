@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useHistory } from 'react-router-dom'
 
 import Styles from './login-styles.scss'
 
@@ -36,6 +36,7 @@ const Login: React.FC<Props> = ({ validation, authentication }: Props) => {
     passwordError: '',
     mainError: ''
   })
+  const history = useHistory()
 
   useEffect(() => {
     setState((prevState) =>
@@ -58,6 +59,7 @@ const Login: React.FC<Props> = ({ validation, authentication }: Props) => {
         password: state.password
       })
       localStorage.setItem('accessToken', account.accessToken)
+      history.replace('/')
     } catch (error: any) {
       setState((prevState) => ({
         ...prevState,
