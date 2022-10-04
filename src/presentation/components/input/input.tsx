@@ -9,7 +9,7 @@ type Props = React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>
 
 const Input: React.FC<Props> = (props: Props) => {
   const { state, setState } = useContext(Context) as LoginStateContext
-  const error = state[`${props.name ?? 'default'}Error` as keyof Omit<LoginState, 'isLoading'>]
+  const error = state[`${props?.name ?? 'default'}Error` as keyof Omit<LoginState, 'isLoading'>]
 
   const enableInput = (event: React.FocusEvent<HTMLInputElement>): void => {
     event.target.readOnly = false
@@ -31,7 +31,7 @@ const Input: React.FC<Props> = (props: Props) => {
   return (
     <div className={Styles.inputWrap}>
       <input {...props} readOnly onFocus={enableInput} aria-label={props.name} onChange={handleChange} />
-      <span aria-label={`${props.name ?? 'no'}-status`} title={getTitle()} className={Styles.status}>{getStatus()}</span>
+      <span aria-label={`${props?.name ?? 'no'}-status`} title={getTitle()} className={Styles.status}>{getStatus()}</span>
     </div>
   )
 }
