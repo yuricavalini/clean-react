@@ -187,6 +187,23 @@ describe('Login Component', () => {
     expect(history.location.pathname).toBe('/')
   })
 
+  test('Should present error if SaveAccessToken fails', async () => {
+    const { user, saveAccessTokenMock } = makeSut()
+
+    const error = new InvalidCredentialsError()
+    jest.spyOn(saveAccessTokenMock, 'save').mockRejectedValueOnce(error)
+
+    await waitFor(async () => await simulateValidSubmit(user))
+    const errorWrap = screen.getByRole('generic', { name: 'error-wrap' })
+    await waitFor(() => {
+      expect(within(errorWrap).getAllByRole('generic')).toHaveLength(1)
+    })
+
+    const mainError = screen.getByRole('generic', { name: 'main-error' })
+    expect(errorWrap).toContainElement(mainError)
+    expect(mainError.textContent).toBe(error.message)
+  })
+
   test('Should go to signup page', async () => {
     const { user } = makeSut()
 
